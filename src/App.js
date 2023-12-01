@@ -2,13 +2,37 @@ import React, { Component } from "react";
 import PropTypes from 'prop-types';
 import { getCanvasPosition } from "./utils/formulas";
 import Canvas from "./components/Canvas";
+import * as Atuh0 from 'auth0-web';
+
+Atuh0.configure({
+  domain: 'dev-8mbpbkkm3b402uvk.jp.auth0.com',
+  clientID: 'RxY5jwMm3qxT7DWCplU5RnloMF6CuSsP',
+  redirectUri: 'http://localhost:3000/',
+  responseType: 'token id_token',
+  scope: 'openid profile manage:points',
+});
 
 class App extends Component {
   componentDidMount() {
     const self = this;
+
+    Atuh0.handleAuthCallback();
+
+    Atuh0.subscribe((auth) => {
+      console.log(auth);
+    });
+
     setInterval(() => {
       self.props.moveObjects(self.canvasMousePosition);
     }, 10);
+
+    window.onresize = () => {
+      const cnv = document.getElementById('aliens-go-home-canvas');
+      cnv.style.width = `${window.innerWidth}px`;
+      cnv.style.height = `${window.innerHeight}px`;
+    };
+
+    window.onresize();
   }
 
   trackMouse(event) {
@@ -19,6 +43,8 @@ class App extends Component {
     return (
       <Canvas 
         angle={this.props.angle}
+        gameState={this.props.gameState}
+        startGame={this.props.startGame}
         trackMouse={event => (this.trackMouse(event))}
       />
     );
@@ -27,7 +53,20 @@ class App extends Component {
 
 App.propTypes = {
   angle: PropTypes.number.isRequired,
-  moveObjects: PropTypes.func.isRequired
-}
+  gameState: PropTypes.shape({
+    start: PropTypes.bool.isRequired,
+    kills: PropTypes.number.isRequired,
+    lives: PropTypes.number.isRequired,
+    flyingObjects: PropTypes.arrayOf(PropTypes.shape({
+      position: PropTypes.shape({
+        x: PropTypes.number.isRequired,
+        y: PropTypes.number.isRequired
+      }).isRequired,
+      id: PropTypes.number.isRequired,
+    })).isRequired,
+  }).isRequired,
+  moveObjects: PropTypes.func.isRequired,
+  startGame: PropTypes.func.isRequired,
+};
 
 export default App;
